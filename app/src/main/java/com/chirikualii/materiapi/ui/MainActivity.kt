@@ -2,12 +2,16 @@ package com.chirikualii.materiapi.ui
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
+import androidx.activity.viewModels
 import com.chirikualii.materiapi.R
 import com.chirikualii.materiapi.data.dummy.DataDummy
 import com.chirikualii.materiapi.data.model.Movie
 import com.chirikualii.materiapi.data.remote.ApiClient
 import com.chirikualii.materiapi.databinding.ActivityMainBinding
+import com.chirikualii.materiapi.ui.adapter.MainViewModel
+import com.chirikualii.materiapi.ui.adapter.MainViewModelFactory
 import com.chirikualii.materiapi.ui.adapter.MovieListAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -16,8 +20,13 @@ import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var binding :ActivityMainBinding
+    private lateinit var binding: ActivityMainBinding
     private lateinit var adapter: MovieListAdapter
+
+    private val mViewModel: MainViewModel by viewModels(
+        factoryProducer = { MainViewModelFactory() }
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -27,8 +36,22 @@ class MainActivity : AppCompatActivity() {
         adapter = MovieListAdapter()
         binding.rvMovie.adapter = adapter
 
+        // binding.ProggressBar.visibility = View.INVISIBLE
+        // binding.ProggressBar.visibility = View.INVISIBLE
+        mViewModel.doGetPopularMovie()
+        observeView()
 
     }
+
+    private fun observeView() {
+        mViewModel.listMovie.observe(this) {
+                    if (it != null){
+                        adapter.addItem(it)
+                        binding.ProggressBar.visibility = View.INVISIBLE
+                    }else
+                        binding.ProggressBar.visibility = View.VISIBLE
+            }
+        }
 
     private fun loadDataFromApi() {
         val service = ApiClient.service
